@@ -18,31 +18,34 @@ import (
 
 	"http2/lib/logger"
 	"http2/srv/doctor/handler"
-	"http2/srv/doctor/proto"
+	doctorpb "http2/srv/doctor/proto"
+	patientpb "http2/srv/patient/proto"
 )
 
 var (
 	CMD = &cobra.Command{
-		Use:   "patient",
-		Short: "starts a patient service",
+		Use:   "doctor",
+		Short: "starts a doctor service",
 		RunE:  runE,
 	}
 
-	port  = 8091
-	debug = false
+	port        = 8092
+	patientPort = 8091
+	debug       = false
 )
 
 func init() {
-	CMD.PersistentFlags().IntVar(&port, "port", 8091, "the port to run the service on")
+	CMD.PersistentFlags().IntVar(&port, "port", 8092, "the port to run the service on")
+	CMD.PersistentFlags().IntVar(&patientPort, "patient-port", 8091, "the port to connect to the patient service on")
 	CMD.PersistentFlags().BoolVar(&debug, "debug", false, "whether to run in debug mode")
 }
 
-func setupHandlerStorage() []*proto.Doctor {
-	return []*proto.Doctor{
-		{Id: "0_test_patient", Name: "Joan W"},
-		{Id: "1_test_patient", Name: "Jack L"},
+func setupHandlerStorage() []*doctorpb.Doctor {
+	return []*doctorpb.Doctor{
+		{Id: "0_test_doctor", Name: "Joan W"},
+		{Id: "1_test_doctor", Name: "Jack L"},
 		{
-			Id:   "2_test_patient",
+			Id:   "2_test_doctor",
 			Name: "Janice T",
 		},
 	}
@@ -52,33 +55,44 @@ func runE(cmd *cobra.Command, _ []string) error {
 	log := logger.Setup(debug, cmd.Name())
 	defer log.Sync()
 
-	// patientProto.NewPatientServiceClient(grpc.NewClientStream())
+	patientConn, err := grpc.DialContext(
+		cmd.Context(),
+		fmt.Sprintf("localhost:%d", patientPort),
+		grpc.WithChainUnaryInterceptor(
+			grpcZap.UnaryClientInterceptor(log),
+			grpcOpenTracing.UnaryClientInterceptor(),
+		),
+		grpc.WithInsecure(),
+	)
+	if err != nil {
+		log.Fatal("failed to dial patient service", zap.Error(err))
+	}
+	patientSVC := patientpb.NewPatientServiceClient(patientConn)
 
 	log.Debug("creating handler")
-	h := handler.New(
-		setupHandlerStorage(),
-	)
+	h := handler.New(log, setupHandlerStorage(), patientSVC)
 
-	log.Info("setting up gRPC server")
+	log.Info("setting up grpc server")
 	srv := grpc.NewServer(grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(
-		grpcRecovery.UnaryServerInterceptor(), // Automatic panic recovery
+		grpcZap.UnaryServerInterceptor(log),
+		grpcRecovery.UnaryServerInterceptor(),  // Automatic panic recovery
+		grpcValidator.UnaryServerInterceptor(), // Validate where possible
 		grpcCTXTags.UnaryServerInterceptor(),
 		grpcOpenTracing.UnaryServerInterceptor(), // Automated OpenTracing span support
-		grpcValidator.UnaryServerInterceptor(),   // Validate where possible
 		// TODO: grpc_prometheus.UnaryServerInterceptor,
 		// TODO: grpcAuth.UnaryServerInterceptor(myAuthFunction),
 	)))
 	grpcZap.SetGrpcLoggerV2(grpcLogSettable.ReplaceGrpcLoggerV2(), log)
 
 	log.Debug("registering handler to grpc")
-	proto.RegisterDoctorServiceServer(srv, h)
+	doctorpb.RegisterDoctorServiceServer(srv, h)
 
 	if debug {
 		log.Debug("registering reflection handler")
 		reflection.Register(srv)
 	}
 
-	log.Debug("setting up gRPC listener")
+	log.Debug("setting up grpc listener")
 	grpcListener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatal("failed to create tcp listener for grpc", zap.Error(err))

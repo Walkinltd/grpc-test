@@ -20,7 +20,7 @@ import (
 
 	"http2/lib/logger"
 	"http2/srv/patient/handler"
-	"http2/srv/patient/proto"
+	patientpb "http2/srv/patient/proto"
 )
 
 var (
@@ -39,19 +39,19 @@ func init() {
 	CMD.PersistentFlags().BoolVar(&debug, "debug", false, "whether to run in debug mode")
 }
 
-func setupHandlerStorage() []*proto.Patient {
-	return []*proto.Patient{
+func setupHandlerStorage() []*patientpb.Patient {
+	return []*patientpb.Patient{
 		{Id: "0_test_patient", Name: "Joan W"},
 		{Id: "1_test_patient", Name: "Jack L"},
 		{
 			Id:   "2_test_patient",
 			Name: "Janice T",
-			Prescriptions: []*proto.Prescription{
+			Prescriptions: []*patientpb.Prescription{
 				{
 					MedicineId:   "Ventolin Evohaler (Blue)",
 					DoctorId:     "0_test_doctor",
 					PrescribedAt: timestamppb.New(time.Now().UTC()),
-					Dosage:       &proto.Dosage{Units: "mg", Quantity: 20},
+					Dosage:       &patientpb.Dosage{Units: "mg", Quantity: 20},
 				},
 			},
 		},
@@ -63,24 +63,22 @@ func runE(cmd *cobra.Command, _ []string) error {
 	defer log.Sync()
 
 	log.Debug("creating handler")
-	h := handler.New(
-		log,
-		setupHandlerStorage(),
-	)
+	h := handler.New(log, setupHandlerStorage())
 
 	log.Info("setting up gRPC server")
 	srv := grpc.NewServer(grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(
-		grpcRecovery.UnaryServerInterceptor(), // Automatic panic recovery
-		grpcCTXTags.UnaryServerInterceptor(),
+		grpcRecovery.UnaryServerInterceptor(),    // Automatic panic recovery
 		grpcOpenTracing.UnaryServerInterceptor(), // Automated OpenTracing span support
 		grpcValidator.UnaryServerInterceptor(),   // Validate where possible
+		grpcCTXTags.UnaryServerInterceptor(),
+		grpcZap.UnaryServerInterceptor(log),
 		// TODO: grpc_prometheus.UnaryServerInterceptor,
 		// TODO: grpcAuth.UnaryServerInterceptor(myAuthFunction),
 	)))
 	grpcZap.SetGrpcLoggerV2(grpcLogSettable.ReplaceGrpcLoggerV2(), log)
 
 	log.Debug("registering handler to grpc")
-	proto.RegisterPatientServiceServer(srv, h)
+	patientpb.RegisterPatientServiceServer(srv, h)
 
 	if debug {
 		log.Debug("registering reflection handler")

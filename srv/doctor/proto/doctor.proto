@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package doctor;
 
+option go_package = "http2/srv/doctor/proto;doctorpb";
+
 import "google/protobuf/timestamp.proto";
 import "validator/validator.proto";
 
@@ -44,22 +46,22 @@ service DoctorService {
 }
 
 message AddPatientRequest {
-  string patient_id = 1 [(validator.field) = {msg_exists : true}];
+  string patient_id = 1 [(validator.field) = {string_not_empty : true}];
 }
 message AddPatientResponse {
   Doctor doctor = 1;
 }
 
 message GetDoctorRequest {
-  string id = 1 [(validator.field) = {msg_exists : true}];
+  string id = 1 [(validator.field) = {string_not_empty : true}];
 }
 message GetDoctorResponse {
   Doctor doctor = 1;
 }
 
 message CreateDoctorRequest {
-  string name = 1 [(validator.field) = {msg_exists : true}];
-  string office = 2 [(validator.field) = {msg_exists : true}];
+  string name = 1 [(validator.field) = {string_not_empty : true}];
+  string office = 2 [(validator.field) = {string_not_empty : true}];
   Schedule schedule = 3 [(validator.field) = {msg_exists : true}];
 }
 message CreateDoctorResponse {
@@ -67,7 +69,7 @@ message CreateDoctorResponse {
 }
 
 message CheckupRequest {
-  string patient_id = 1 [(validator.field) = {msg_exists : true}];
-  string doctor_id = 2 [(validator.field) = {msg_exists : true}];
+  string patient_id = 1 [(validator.field) = {string_not_empty : true}];
+  string doctor_id = 2 [(validator.field) = {string_not_empty : true}];
 }
 message CheckupResponse {}

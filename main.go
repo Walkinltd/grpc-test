@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
+	"http2/srv/doctor"
 	"http2/srv/patient"
 )
 
@@ -28,7 +29,8 @@ func init() {
 
 	rCMD.AddCommand(
 		patient.CMD,
-	) // TODO
+		doctor.CMD,
+	)
 }
 
 func main() {

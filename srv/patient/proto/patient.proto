@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package patient;
 
+option go_package = "http2/srv/patient/proto;patientpb";
+
 import "google/protobuf/timestamp.proto";
 import "validator/validator.proto";
 
@@ -36,23 +38,23 @@ service PatientService {
 }
 
 message GetPatientRequest {
-  string id = 1 [(validator.field) = {msg_exists : true}];
+  string id = 1 [(validator.field) = {string_not_empty : true}];
 }
 message GetPatientResponse {
   Patient patient = 1;
 }
 
 message CreatePatientRequest {
-  string name = 1 [(validator.field) = {msg_exists : true}];
+  string name = 1 [(validator.field) = {string_not_empty : true}];
 }
 message CreatePatientResponse {
   Patient patient = 1;
 }
 
 message PrescribeRequest {
-  string patient_id = 1 [(validator.field) = {msg_exists : true}];
-  string medicine_id = 2 [(validator.field) = {msg_exists : true}];
-  string doctor_id = 3 [(validator.field) = {msg_exists : true}];
+  string patient_id = 1 [(validator.field) = {string_not_empty : true}];
+  string medicine_id = 2 [(validator.field) = {string_not_empty : true}];
+  string doctor_id = 3 [(validator.field) = {string_not_empty : true}];
   Dosage dosage = 4 [(validator.field) = {msg_exists : true}];
 }
 message PrescribeResponse {

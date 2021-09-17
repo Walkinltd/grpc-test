@@ -1,8 +1,4 @@
 version: v1
-managed:
-  enabled: true
-  go_package_prefix:
-    default: http2/srv
 plugins:
   - name: go
     out: srv

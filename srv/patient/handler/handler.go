@@ -9,19 +9,19 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"http2/srv/patient/proto"
+	patientpb "http2/srv/patient/proto"
 )
 
-func New(log *zap.Logger, s []*proto.Patient) *h {
+func New(log *zap.Logger, s []*patientpb.Patient) *h {
 	return &h{log: log.Named("handler"), storage: s}
 }
 
 type h struct {
-	proto.UnimplementedPatientServiceServer
+	patientpb.UnimplementedPatientServiceServer
 
 	log     *zap.Logger
 	rwl     sync.RWMutex
-	storage []*proto.Patient
+	storage []*patientpb.Patient
 	idCount int
 }
 
@@ -32,7 +32,7 @@ func (h *h) generateID() string {
 	return fmt.Sprintf("%d_patient", h.idCount)
 }
 
-func (h *h) GetPatient(_ context.Context, req *proto.GetPatientRequest) (*proto.GetPatientResponse, error) {
+func (h *h) GetPatient(_ context.Context, req *patientpb.GetPatientRequest) (*patientpb.GetPatientResponse, error) {
 	h.rwl.RLock()
 	defer h.rwl.RUnlock()
 
@@ -40,26 +40,25 @@ func (h *h) GetPatient(_ context.Context, req *proto.GetPatientRequest) (*proto.
 	h.log.Debug("getting patient", zap.String("patient_id", id))
 	for _, p := range h.storage {
 		if p.GetId() == id {
-			return &proto.GetPatientResponse{Patient: p}, nil
+			return &patientpb.GetPatientResponse{Patient: p}, nil
 		}
 	}
 	return nil, fmt.Errorf("not found")
 }
-func (h *h) CreatePatient(_ context.Context, req *proto.CreatePatientRequest) (*proto.CreatePatientResponse, error) {
+
+func (h *h) CreatePatient(_ context.Context, req *patientpb.CreatePatientRequest) (*patientpb.CreatePatientResponse, error) {
 	h.log.Debug("creating patient", zap.String("patient_name", req.GetName()))
-	if req.GetName() == "" {
-		return nil, fmt.Errorf("name is required")
-	}
 
 	h.rwl.Lock()
 	defer h.rwl.Unlock()
 
-	p := &proto.Patient{Id: h.generateID(), Name: req.GetName()}
+	p := &patientpb.Patient{Id: h.generateID(), Name: req.GetName()}
 	h.storage = append(h.storage, p)
 
-	return &proto.CreatePatientResponse{Patient: p}, nil
+	return &patientpb.CreatePatientResponse{Patient: p}, nil
 }
-func (h *h) Prescribe(_ context.Context, req *proto.PrescribeRequest) (*proto.PrescribeResponse, error) {
+
+func (h *h) Prescribe(_ context.Context, req *patientpb.PrescribeRequest) (*patientpb.PrescribeResponse, error) {
 	h.log.Debug(
 		"adding prescription to patient",
 		zap.String("patient_id", req.GetPatientId()),
@@ -67,24 +66,13 @@ func (h *h) Prescribe(_ context.Context, req *proto.PrescribeRequest) (*proto.Pr
 		zap.String("doctor_id", req.GetDoctorId()),
 	)
 
-	switch {
-	case req.GetDosage() == nil:
-		return nil, fmt.Errorf("dosage is required")
-	case req.GetPatientId() == "":
-		return nil, fmt.Errorf("patient id is required")
-	case req.GetDoctorId() == "":
-		return nil, fmt.Errorf("doctor id is required")
-	case req.GetMedicineId() == "":
-		return nil, fmt.Errorf("medicine id is required")
-	}
-
 	h.rwl.Lock()
 	defer h.rwl.Unlock()
 
 	id := req.GetPatientId()
 
 	h.log.Debug("getting patient", zap.String("patient_id", id))
-	var p *proto.Patient
+	var p *patientpb.Patient
 	for i := range h.storage {
 		if h.storage[i].GetId() == id {
 			p = h.storage[i]
@@ -97,7 +85,7 @@ func (h *h) Prescribe(_ context.Context, req *proto.PrescribeRequest) (*proto.Pr
 
 	p.Prescriptions = append(
 		p.Prescriptions,
-		&proto.Prescription{
+		&patientpb.Prescription{
 			MedicineId:   req.GetMedicineId(),
 			DoctorId:     req.GetDoctorId(),
 			PrescribedAt: timestamppb.New(time.Now().UTC()),
@@ -106,5 +94,5 @@ func (h *h) Prescribe(_ context.Context, req *proto.PrescribeRequest) (*proto.Pr
 	)
 
 	h.log.Debug("writing to storage", zap.String("patient_id", id))
-	return &proto.PrescribeResponse{Patient: p}, nil
+	return &patientpb.PrescribeResponse{Patient: p}, nil
 }
