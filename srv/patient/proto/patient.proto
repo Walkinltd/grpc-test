@@ -6,29 +6,33 @@ import "google/protobuf/timestamp.proto";
 
 //option go_package = "http2/srv/patient;patientpb";
 
+// A Dosage describes how much of a specific medicine has been prescribed to a Patient.
 message Dosage {
-  string units = 1;
-  int32 quantity = 2;
+  string units = 1; // What units the quantity is in.
+  int32 quantity = 2; // How much of the medicine has been prescribed.
 }
 
+// A Prescription contains details about medicine given by a Doctor to a Patient.
 message Prescription {
-  string medicine_id = 1;
-  string doctor_id = 2;
-  google.protobuf.Timestamp prescribed_at = 3;
+  string medicine_id = 1; // The medicine that has been prescribed to the Patient.
+  string doctor_id = 2; // The doctor who prescribed the medicine.
+  google.protobuf.Timestamp prescribed_at = 3; // When the medicine was prescribed.
 
-  Dosage dosage = 4;
+  Dosage dosage = 4; // How much of the medicine was prescribed.
 }
 
+// A Patient is a person who has visited the Doctor.
 message Patient {
   string id = 1;
-  string name = 2;
+  string name = 2; // The name of the Patient.
 
-  repeated Prescription prescriptions = 3;
+  repeated Prescription prescriptions = 3; // Information about the medicine(s) prescribed to the Patient.
 }
 
 service PatientService {
   rpc GetPatient(GetPatientRequest) returns (GetPatientResponse);
   rpc CreatePatient(CreatePatientRequest) returns (CreatePatientResponse);
+  // Prescribe allows a doctor to add medicine to a Patient's medical history.
   rpc Prescribe(PrescribeRequest) returns (PrescribeResponse);
 }
 

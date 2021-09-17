@@ -21,13 +21,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// A Dosage describes how much of a specific medicine has been prescribed to a Patient.
 type Dosage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Units    string `protobuf:"bytes,1,opt,name=units,proto3" json:"units,omitempty"`
-	Quantity int32  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	Units    string `protobuf:"bytes,1,opt,name=units,proto3" json:"units,omitempty"`        // What units the quantity is in.
+	Quantity int32  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"` // How much of the medicine has been prescribed.
 }
 
 func (x *Dosage) Reset() {
@@ -76,15 +77,16 @@ func (x *Dosage) GetQuantity() int32 {
 	return 0
 }
 
+// A Prescription contains details about medicine given by a Doctor to a Patient.
 type Prescription struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	MedicineId   string                 `protobuf:"bytes,1,opt,name=medicine_id,json=medicineId,proto3" json:"medicine_id,omitempty"`
-	DoctorId     string                 `protobuf:"bytes,2,opt,name=doctor_id,json=doctorId,proto3" json:"doctor_id,omitempty"`
-	PrescribedAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=prescribed_at,json=prescribedAt,proto3" json:"prescribed_at,omitempty"`
-	Dosage       *Dosage                `protobuf:"bytes,4,opt,name=dosage,proto3" json:"dosage,omitempty"`
+	MedicineId   string                 `protobuf:"bytes,1,opt,name=medicine_id,json=medicineId,proto3" json:"medicine_id,omitempty"`       // The medicine that has been prescribed to the Patient.
+	DoctorId     string                 `protobuf:"bytes,2,opt,name=doctor_id,json=doctorId,proto3" json:"doctor_id,omitempty"`             // The doctor who prescribed the medicine.
+	PrescribedAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=prescribed_at,json=prescribedAt,proto3" json:"prescribed_at,omitempty"` // When the medicine was prescribed.
+	Dosage       *Dosage                `protobuf:"bytes,4,opt,name=dosage,proto3" json:"dosage,omitempty"`                                 // How much of the medicine was prescribed.
 }
 
 func (x *Prescription) Reset() {
@@ -147,14 +149,15 @@ func (x *Prescription) GetDosage() *Dosage {
 	return nil
 }
 
+// A Patient is a person who has visited the Doctor.
 type Patient struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
 	Id            string          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string          `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Prescriptions []*Prescription `protobuf:"bytes,3,rep,name=prescriptions,proto3" json:"prescriptions,omitempty"`
+	Name          string          `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                   // The name of the Patient.
+	Prescriptions []*Prescription `protobuf:"bytes,3,rep,name=prescriptions,proto3" json:"prescriptions,omitempty"` // Information about the medicine(s) prescribed to the Patient.
 }
 
 func (x *Patient) Reset() {

@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type PatientServiceClient interface {
 	GetPatient(ctx context.Context, in *GetPatientRequest, opts ...grpc.CallOption) (*GetPatientResponse, error)
 	CreatePatient(ctx context.Context, in *CreatePatientRequest, opts ...grpc.CallOption) (*CreatePatientResponse, error)
+	// Prescribe allows a doctor to add medicine to a Patient's medical history.
 	Prescribe(ctx context.Context, in *PrescribeRequest, opts ...grpc.CallOption) (*PrescribeResponse, error)
 }
 
@@ -64,6 +65,7 @@ func (c *patientServiceClient) Prescribe(ctx context.Context, in *PrescribeReque
 type PatientServiceServer interface {
 	GetPatient(context.Context, *GetPatientRequest) (*GetPatientResponse, error)
 	CreatePatient(context.Context, *CreatePatientRequest) (*CreatePatientResponse, error)
+	// Prescribe allows a doctor to add medicine to a Patient's medical history.
 	Prescribe(context.Context, *PrescribeRequest) (*PrescribeResponse, error)
 }
 
