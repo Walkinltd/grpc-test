@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package patient;
+
+import "google/protobuf/timestamp.proto";
+
+//option go_package = "http2/srv/patient;patientpb";
+
+message Dosage {
+  string units = 1;
+  int32 quantity = 2;
+}
+
+message Prescription {
+  string medicine_id = 1;
+  string doctor_id = 2;
+  google.protobuf.Timestamp prescribed_at = 3;
+
+  Dosage dosage = 4;
+}
+
+message Patient {
+  string id = 1;
+  string name = 2;
+
+  repeated Prescription prescriptions = 3;
+}
+
+service PatientService {
+  rpc GetPatient(GetPatientRequest) returns (GetPatientResponse);
+  rpc CreatePatient(CreatePatientRequest) returns (CreatePatientResponse);
+  rpc Prescribe(PrescribeRequest) returns (PrescribeResponse);
+}
+
+message GetPatientRequest {
+  string id = 1;
+}
+message GetPatientResponse {
+  Patient patient = 1;
+}
+
+message CreatePatientRequest {
+  string name = 1;
+}
+message CreatePatientResponse {
+  Patient patient = 1;
+}
+
+message PrescribeRequest {
+  string patient_id = 1;
+  string medicine_id = 2;
+  string doctor_id = 3;
+  Dosage dosage = 4;
+}
+message PrescribeResponse {
+  Patient patient = 1;
+}
