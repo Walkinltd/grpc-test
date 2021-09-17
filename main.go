@@ -6,14 +6,15 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+
+	"http2/srv/patient"
 )
 
 var rCMD = &cobra.Command{
-	Use:     "http-2",
+	Use:     "grpc-test",
 	Short:   "",
 	Long:    "",
 	Example: "",
-	RunE:    nil,
 }
 
 var log *zap.Logger
@@ -25,7 +26,9 @@ func init() {
 	}
 	log = l.Named("main")
 
-	rCMD.AddCommand() // TODO
+	rCMD.AddCommand(
+		patient.CMD,
+	) // TODO
 }
 
 func main() {
