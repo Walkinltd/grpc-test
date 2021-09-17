@@ -12,3 +12,6 @@ plugins:
     opt:
       - paths=source_relative
       - require_unimplemented_servers=false
+  - name: govalidators
+    out: srv
+    opt: paths=source_relative

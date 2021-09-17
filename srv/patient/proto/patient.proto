@@ -3,8 +3,7 @@ syntax = "proto3";
 package patient;
 
 import "google/protobuf/timestamp.proto";
-
-//option go_package = "http2/srv/patient;patientpb";
+import "validator/validator.proto";
 
 // A Dosage describes how much of a specific medicine has been prescribed to a Patient.
 message Dosage {
@@ -37,24 +36,24 @@ service PatientService {
 }
 
 message GetPatientRequest {
-  string id = 1;
+  string id = 1 [(validator.field) = {msg_exists : true}];
 }
 message GetPatientResponse {
   Patient patient = 1;
 }
 
 message CreatePatientRequest {
-  string name = 1;
+  string name = 1 [(validator.field) = {msg_exists : true}];
 }
 message CreatePatientResponse {
   Patient patient = 1;
 }
 
 message PrescribeRequest {
-  string patient_id = 1;
-  string medicine_id = 2;
-  string doctor_id = 3;
-  Dosage dosage = 4;
+  string patient_id = 1 [(validator.field) = {msg_exists : true}];
+  string medicine_id = 2 [(validator.field) = {msg_exists : true}];
+  string doctor_id = 3 [(validator.field) = {msg_exists : true}];
+  Dosage dosage = 4 [(validator.field) = {msg_exists : true}];
 }
 message PrescribeResponse {
   Patient patient = 1;

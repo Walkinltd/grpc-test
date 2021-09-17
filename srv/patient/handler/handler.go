@@ -19,13 +19,15 @@ func New(log *zap.Logger, s []*proto.Patient) *h {
 type h struct {
 	proto.UnimplementedPatientServiceServer
 
-	rwl     sync.RWMutex
 	log     *zap.Logger
+	rwl     sync.RWMutex
 	storage []*proto.Patient
 	idCount int
 }
 
 func (h *h) generateID() string {
+	h.rwl.Lock()
+	defer h.rwl.Unlock()
 	h.idCount += 1
 	return fmt.Sprintf("%d_patient", h.idCount)
 }
@@ -77,6 +79,8 @@ func (h *h) Prescribe(_ context.Context, req *proto.PrescribeRequest) (*proto.Pr
 	}
 
 	h.rwl.Lock()
+	defer h.rwl.Unlock()
+
 	id := req.GetPatientId()
 
 	h.log.Debug("getting patient", zap.String("patient_id", id))
@@ -102,8 +106,5 @@ func (h *h) Prescribe(_ context.Context, req *proto.PrescribeRequest) (*proto.Pr
 	)
 
 	h.log.Debug("writing to storage", zap.String("patient_id", id))
-
-	h.rwl.Unlock()
-
 	return &proto.PrescribeResponse{Patient: p}, nil
 }

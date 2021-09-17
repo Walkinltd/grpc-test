@@ -1,9 +1,8 @@
-package patient
+package doctor
 
 import (
 	"fmt"
 	"net"
-	"time"
 
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcLogSettable "github.com/grpc-ecosystem/go-grpc-middleware/logging/settable"
@@ -16,11 +15,10 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"http2/lib/logger"
-	"http2/srv/patient/handler"
-	"http2/srv/patient/proto"
+	"http2/srv/doctor/handler"
+	"http2/srv/doctor/proto"
 )
 
 var (
@@ -39,21 +37,13 @@ func init() {
 	CMD.PersistentFlags().BoolVar(&debug, "debug", false, "whether to run in debug mode")
 }
 
-func setupHandlerStorage() []*proto.Patient {
-	return []*proto.Patient{
+func setupHandlerStorage() []*proto.Doctor {
+	return []*proto.Doctor{
 		{Id: "0_test_patient", Name: "Joan W"},
 		{Id: "1_test_patient", Name: "Jack L"},
 		{
 			Id:   "2_test_patient",
 			Name: "Janice T",
-			Prescriptions: []*proto.Prescription{
-				{
-					MedicineId:   "Ventolin Evohaler (Blue)",
-					DoctorId:     "0_test_doctor",
-					PrescribedAt: timestamppb.New(time.Now().UTC()),
-					Dosage:       &proto.Dosage{Units: "mg", Quantity: 20},
-				},
-			},
 		},
 	}
 }
@@ -62,9 +52,10 @@ func runE(cmd *cobra.Command, _ []string) error {
 	log := logger.Setup(debug, cmd.Name())
 	defer log.Sync()
 
+	// patientProto.NewPatientServiceClient(grpc.NewClientStream())
+
 	log.Debug("creating handler")
 	h := handler.New(
-		log,
 		setupHandlerStorage(),
 	)
 
@@ -80,7 +71,7 @@ func runE(cmd *cobra.Command, _ []string) error {
 	grpcZap.SetGrpcLoggerV2(grpcLogSettable.ReplaceGrpcLoggerV2(), log)
 
 	log.Debug("registering handler to grpc")
-	proto.RegisterPatientServiceServer(srv, h)
+	proto.RegisterDoctorServiceServer(srv, h)
 
 	if debug {
 		log.Debug("registering reflection handler")
